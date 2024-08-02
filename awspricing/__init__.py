@@ -2,6 +2,7 @@ from typing import Dict, Type, List
 import boto3
 import json
 import datetime
+import progressbar
 
 from .offers import AWSOffer, get_offer_class  # noqa
 from .cache import maybe_read_from_cache, maybe_write_to_cache
@@ -49,7 +50,7 @@ def _fetch_offer(offer_name, version=None):
     paginator = client.get_paginator('get_products')
     resp_pages = paginator.paginate(ServiceCode=offer_name, FormatVersion='aws_v1')
     offer = {}
-    for page in resp_pages:
+    for page in progressbar.progressbar(resp_pages):
         for product in page['PriceList']:
             product_offer = json.loads(product)
             sku = product_offer['product']['sku']
