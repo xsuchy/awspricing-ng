@@ -52,9 +52,11 @@ REGION_SHORTS = {
 }
 
 VOLUME_TYPE_SHORTS = {
+    'gp3': 'General Purpose',
     'gp2': 'General Purpose',
     'sc1': 'Cold HDD',
     'standard': 'Magnetic',
+    'io2': 'Provisioned IOPS',
     'io1': 'Provisioned IOPS',
     'st1': 'Throughput Optimized HDD'
 }
