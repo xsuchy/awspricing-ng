@@ -412,7 +412,7 @@ class EC2Offer(AWSOffer):
                 "Unable to lookup SKU for attributes: {}".format(attributes))
         return sku
 
-    def ebs_volume(
+    def ebs_volume_monthly(
             self,
             volume_type,  # type: str
             region=None  # type: Optional[str]
@@ -444,7 +444,7 @@ class EC2Offer(AWSOffer):
                 "Unable to lookup SKU for attributes: {}".format(attributes))
         return sku
 
-    def ebs_iops(self, region=None):
+    def ebs_iops_monhtly(self, region=None):
         sku = self.get_sku_ebs_iops(region=region, group='EBS IOPS')
         offer = self._offer_data[sku]
         term = offer['terms']['OnDemand']
