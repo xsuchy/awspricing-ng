@@ -8,7 +8,7 @@ import time
 _USE_CACHE = None
 _CACHE_PATH = None
 _CACHE_MINUTES = None
-
+_WRITE_TO_CACHE = False
 
 DEFAULT_USE_CACHE = '0'  # False
 DEFAULT_CACHE_PATH = os.path.join('/tmp', 'awspricing')
@@ -78,9 +78,11 @@ def maybe_read_from_cache(cache_key):
 
     path = _build_path(cache_key)
     if not os.path.exists(path):
+        _WRITE_TO_CACHE = True
         return None  # not in cache
     elif _is_cache_expired(path):
         os.remove(path)
+        _WRITE_TO_CACHE = True
         return None
     with open(path) as f:
         return json.load(f)
@@ -88,6 +90,8 @@ def maybe_read_from_cache(cache_key):
 
 def maybe_write_to_cache(cache_key, data):
     if not use_cache():
+        return
+    if not _WRITE_TO_CACHE:
         return
 
     path = _build_path(cache_key)
