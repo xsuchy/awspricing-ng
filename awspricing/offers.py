@@ -166,7 +166,7 @@ class EC2Offer(AWSOffer):
             'volumeApiName', 'location', product_families=['Storage'])
 
         self._reverse_sku_ebs_iops = self._generate_reverse_sku_mapping(
-            'location', 'group', product_families=['System Operation'])
+            'volumeApiName', 'location', 'group', product_families=['System Operation'])
 
         # Lazily-loaded cache to hold offerTermCodes within a SKU
         self._reserved_terms_to_offer_term_code = defaultdict(dict)
@@ -427,12 +427,13 @@ class EC2Offer(AWSOffer):
 
     def get_sku_ebs_iops(
             self,
+            volume_type,  # type: str
             group='EBS IOPS',
             region=None  # type: Optional[str]
     ):
         region = self._normalize_region(region)
 
-        attributes = [region, group]
+        attributes = [volume_type, region, group]
         if not all(attributes):
             raise ValueError(
                 "All attributes are required: {}".format(attributes))
@@ -443,8 +444,8 @@ class EC2Offer(AWSOffer):
                 "Unable to lookup SKU for attributes: {}".format(attributes))
         return sku
 
-    def ebs_iops_monthly(self, region=None):
-        sku = self.get_sku_ebs_iops(region=region, group='EBS IOPS')
+    def ebs_iops_monthly(self, volume_type, region=None):
+        sku = self.get_sku_ebs_iops(volume_type, region=region, group='EBS IOPS')
         offer = self._offer_data[sku]
         term = offer['terms']['OnDemand']
         price_dimensions = next(six.itervalues(term))['priceDimensions']

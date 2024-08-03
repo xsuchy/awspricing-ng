@@ -51,6 +51,7 @@ Usage
     ) # 0.10 per GB per Month
 
     ec2_offer.ebs_iops_monthly(
+      volume_type='io1',
       region='us-east-1'
     ) # 0.065 per Provisioned IOP per Month, for io1 volumes
 
