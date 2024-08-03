@@ -51,15 +51,6 @@ REGION_SHORTS = {
     'us-gov-east-1': 'AWS GovCloud (US-East)'
 }
 
-VOLUME_TYPE_SHORTS = {
-    'gp3': 'General Purpose',
-    'gp2': 'General Purpose',
-    'sc1': 'Cold HDD',
-    'standard': 'Magnetic',
-    'io2': 'Provisioned IOPS',
-    'io1': 'Provisioned IOPS',
-    'st1': 'Throughput Optimized HDD'
-}
 
 EC2_LEASE_CONTRACT_LENGTH = Enum(one_year='1yr', three_year='3yr')
 EC2_OFFERING_CLASS = Enum('standard', 'convertible')

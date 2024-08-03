@@ -7,7 +7,6 @@ import six
 
 from .constants import (
     REGION_SHORTS,
-    VOLUME_TYPE_SHORTS,
     EC2_LEASE_CONTRACT_LENGTH,
     EC2_OFFERING_CLASS,
     EC2_PURCHASE_OPTION,
@@ -164,7 +163,7 @@ class EC2Offer(AWSOffer):
         )
 
         self._reverse_sku_ebs = self._generate_reverse_sku_mapping(
-            'volumeType', 'location', product_families=['Storage'])
+            'volumeApiName', 'location', product_families=['Storage'])
 
         self._reverse_sku_ebs_iops = self._generate_reverse_sku_mapping(
             'location', 'group', product_families=['System Operation'])
@@ -458,8 +457,6 @@ class EC2Offer(AWSOffer):
         if not volume_type:
             raise ValueError("No volume_type is set.")
 
-        if volume_type in VOLUME_TYPE_SHORTS:  # Use long-name to match pricing API
-            volume_type = VOLUME_TYPE_SHORTS[volume_type]
         return volume_type
 
 
