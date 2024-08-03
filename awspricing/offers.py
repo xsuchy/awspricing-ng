@@ -398,7 +398,6 @@ class EC2Offer(AWSOffer):
             region=None  # type: Optional[str]
     ):
         region = self._normalize_region(region)
-        volume_type = self._normalize_volume_type(volume_type)
 
         attributes = [volume_type, region]
         if not all(attributes):
@@ -455,13 +454,6 @@ class EC2Offer(AWSOffer):
         price_dimension = next(six.itervalues(price_dimensions))
         raw_price = price_dimension['pricePerUnit']['USD']
         return float(raw_price)
-
-    def _normalize_volume_type(self,
-                               volume_type):  # type: (Optional[str]) -> str
-        if not volume_type:
-            raise ValueError("No volume_type is set.")
-
-        return volume_type
 
 
 @implements('AmazonRDS')
