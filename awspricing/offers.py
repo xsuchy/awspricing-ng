@@ -445,7 +445,10 @@ class EC2Offer(AWSOffer):
         return sku
 
     def ebs_iops_monthly(self, volume_type, region=None):
-        sku = self.get_sku_ebs_iops(volume_type, region=region, group='EBS IOPS')
+        try:
+            sku = self.get_sku_ebs_iops(volume_type, region=region, group='EBS IOPS')
+        except ValueError:
+            return 0
         offer = self._offer_data[sku]
         term = offer['terms']['OnDemand']
         price_dimensions = next(six.itervalues(term))['priceDimensions']
