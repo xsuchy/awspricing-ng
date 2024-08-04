@@ -168,6 +168,9 @@ class EC2Offer(AWSOffer):
         self._reverse_sku_ebs_iops = self._generate_reverse_sku_mapping(
             'volumeApiName', 'location', 'group', product_families=['System Operation'])
 
+        self._reverse_sku_snapshot_archive = self._generate_reverse_sku_mapping(
+            'snapshotarchivefeetype', 'regionCode', product_families=['Storage Snapshot'])
+
         # Lazily-loaded cache to hold offerTermCodes within a SKU
         self._reserved_terms_to_offer_term_code = defaultdict(dict)
 
@@ -392,6 +395,41 @@ class EC2Offer(AWSOffer):
             raise ValueError("The convertible offering class is not available "
                              "on a 1year lease.")
 
+    def get_sku_snapshot_archive(
+            self,
+            archive,  # type: bool
+            region=None  # type: Optional[str]
+    ):
+        attributes = ["SnapshotArchiveStorage", region]
+        if not all(attributes):
+            raise ValueError(
+                "All attributes are required: {}".format(attributes))
+
+        sku = self._reverse_sku_snapshot_archive.get(self.hash_attributes(*attributes))
+        if sku is None:
+            raise ValueError(
+                "Unable to lookup SKU for attributes: {}".format(attributes))
+        return sku
+
+
+    def ebs_snapshot_monthly(
+            self,
+            archive=False,  # type: bool
+            region=None  # type: Optional[str]
+    ):
+        # type: (...) -> float
+        if archive:
+            sku = self.get_sku_snapshot(archive, region=region)
+        else:
+            # TODO
+            raise ValueError("Not implemented")
+        offer = self._offer_data[sku]
+        term = offer['terms']['OnDemand']
+        price_dimensions = next(six.itervalues(term))['priceDimensions']
+        price_dimension = next(six.itervalues(price_dimensions))
+        raw_price = price_dimension['pricePerUnit']['USD']
+        return float(raw_price)
+
     def get_sku_ebs(
             self,
             volume_type,  # type: str
@@ -409,6 +447,14 @@ class EC2Offer(AWSOffer):
             raise ValueError(
                 "Unable to lookup SKU for attributes: {}".format(attributes))
         return sku
+
+# Snapshot archives ahs snapshotarchivefeetype
+# normal snapshots does not have it
+# Archives has 
+# usagetype": "USE2-EBS:SnapshotArchiveStorage",
+# normal hase
+# "usagetype": "USW1-EBS:SnapshotUsage",
+
 
     def ebs_volume_monthly(
             self,
@@ -460,6 +506,7 @@ class EC2Offer(AWSOffer):
 class RDSOffer(AWSOffer):
 
     HOURS_IN_YEAR = 24 * 365
+
 
     def __init__(self, *args, **kwargs):
         super(RDSOffer, self).__init__(*args, **kwargs)
