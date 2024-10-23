@@ -10,7 +10,7 @@ _CACHE_PATH = None
 _CACHE_MINUTES = None
 _WRITE_TO_CACHE = False
 
-DEFAULT_USE_CACHE = '0'  # False
+DEFAULT_USE_CACHE = '1'  # False
 DEFAULT_CACHE_PATH = os.path.join('/tmp', 'awspricing')
 DEFAULT_CACHE_MINUTES = '1440'  # 1 day
 
