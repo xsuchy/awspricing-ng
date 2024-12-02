@@ -48,7 +48,8 @@ def _fetch_offer(offer_name, version=None):
         return offer
 
     paginator = client.get_paginator('get_products')
-    resp_pages = paginator.paginate(ServiceCode=offer_name, FormatVersion='aws_v1')
+    resp_pages = paginator.paginate(ServiceCode=offer_name, FormatVersion='aws_v1',
+                                    PaginationConfig={'PageSize': 100})
     offer = {}
     for page in progressbar.progressbar(resp_pages):
         for product in page['PriceList']:

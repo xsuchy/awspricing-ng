@@ -75,6 +75,7 @@ def _build_path(cache_key):
 def maybe_read_from_cache(cache_key):
     if not use_cache():
         return None
+    global _WRITE_TO_CACHE
 
     path = _build_path(cache_key)
     if not os.path.exists(path):
@@ -91,6 +92,7 @@ def maybe_read_from_cache(cache_key):
 def maybe_write_to_cache(cache_key, data):
     if not use_cache():
         return
+    global _WRITE_TO_CACHE
     if not _WRITE_TO_CACHE:
         return
 
