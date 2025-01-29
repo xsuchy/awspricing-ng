@@ -17,86 +17,87 @@ DEFAULT_CACHE_MINUTES = '1440'  # 1 day
 
 logger = logging.getLogger(__name__)
 
+class Cache:
 
-def use_cache():
-    global _USE_CACHE
-    if _USE_CACHE is None:
-        setting = os.getenv('AWSPRICING_USE_CACHE', DEFAULT_USE_CACHE)
-        if setting not in ['0', '1']:
-            raise ValueError("Unknown value '{}' for AWSPRICING_USE_CACHE."
-                             .format(setting))
-        _USE_CACHE = bool(int(setting))
-    return _USE_CACHE
+    def __init__(self, cache_key):
+        self.cache_key = cache_key
+        self._CACHE_PATH = None
+        self._CACHE_MINUTES = None
+        self._WRITE_TO_CACHE = False
+        self._USE_CACHE = None
+        self.use_cache()
+        self.path = self._build_path()
 
-
-def cache_path():
-    global _CACHE_PATH
-    if _CACHE_PATH is None:
-        setting = os.getenv('AWSPRICING_CACHE_PATH', DEFAULT_CACHE_PATH)
-        if not os.path.isdir(setting):
-            try:
-                os.makedirs(setting)
-            except OSError:
-                logger.exception("Unable to create cache directory: {}"
+    def use_cache(self):
+        if self._USE_CACHE is None:
+            setting = os.getenv('AWSPRICING_USE_CACHE', DEFAULT_USE_CACHE)
+            if setting not in ['0', '1']:
+                raise ValueError("Unknown value '{}' for AWSPRICING_USE_CACHE."
                                  .format(setting))
-                raise
-        _CACHE_PATH = setting
-    return _CACHE_PATH
+            self._USE_CACHE = bool(int(setting))
+        return self._USE_CACHE
 
 
-def cache_minutes():
-    global _CACHE_MINUTES
-    if _CACHE_MINUTES is None:
-        setting = os.getenv('AWSPRICING_CACHE_MINUTES', DEFAULT_CACHE_MINUTES)
+    def cache_path(self):
+        if self._CACHE_PATH is None:
+            setting = os.getenv('AWSPRICING_CACHE_PATH', DEFAULT_CACHE_PATH)
+            if not os.path.isdir(setting):
+                try:
+                    os.makedirs(setting)
+                except OSError:
+                    logger.exception("Unable to create cache directory: %s",
+                                     setting)
+                    raise
+            self._CACHE_PATH = setting
+        return self._CACHE_PATH
+
+
+    def cache_minutes(self):
+        if self._CACHE_MINUTES is None:
+            setting = os.getenv('AWSPRICING_CACHE_MINUTES', DEFAULT_CACHE_MINUTES)
+            try:
+                self._CACHE_MINUTES = int(setting)
+            except ValueError:
+                raise ValueError("Unknown value '{}' for AWSPRICING_CACHE_MINUTES. "
+                                 "Expected an integer.".format(setting))
+        return self._CACHE_MINUTES
+
+    def _is_cache_expired(self):
         try:
-            _CACHE_MINUTES = int(setting)
-        except ValueError:
-            raise ValueError("Unknown value '{}' for AWSPRICING_CACHE_MINUTES. "
-                             "Expected an integer.".format(setting))
-    return _CACHE_MINUTES
+            mod_time = os.path.getmtime(self.path)
+        except (OSError, IOError):
+            return True
+        cache_lifetime_seconds = time.time() - mod_time
+        return cache_lifetime_seconds > self.cache_minutes() * 60
 
 
-def _is_cache_expired(path):
-    try:
-        mod_time = os.path.getmtime(path)
-    except (OSError, IOError):
-        return True
-    cache_lifetime_seconds = time.time() - mod_time
-    return cache_lifetime_seconds > cache_minutes() * 60
+    def _build_path(self):
+        if not re.match(r'^[A-Za-z0-9_\-]*$', self.cache_key):
+            raise ValueError("Cache key '{}' contains invalid characters."
+                             .format(self.cache_key))
+        return os.path.join(self.cache_path(), self.cache_key)
+
+    def maybe_read_from_cache(self):
+        if not self.use_cache():
+            return None
+
+        if not os.path.exists(self.path):
+            self._WRITE_TO_CACHE = True
+            return None  # not in cache
+        elif self._is_cache_expired():
+            os.remove(self.path)
+            self._WRITE_TO_CACHE = True
+            return None
+        with open(self.path) as f:
+            return json.load(f)
 
 
-def _build_path(cache_key):
-    if not re.match(r'^[A-Za-z0-9_\-]*$', cache_key):
-        raise ValueError("Cache key '{}' contains invalid characters."
-                         .format(cache_key))
-    return os.path.join(cache_path(), cache_key)
+    def maybe_write_to_cache(self, data):
+        if not self.use_cache():
+            return
+        if not self._WRITE_TO_CACHE:
+            return
 
-
-def maybe_read_from_cache(cache_key):
-    if not use_cache():
-        return None
-    global _WRITE_TO_CACHE
-
-    path = _build_path(cache_key)
-    if not os.path.exists(path):
-        _WRITE_TO_CACHE = True
-        return None  # not in cache
-    elif _is_cache_expired(path):
-        os.remove(path)
-        _WRITE_TO_CACHE = True
-        return None
-    with open(path) as f:
-        return json.load(f)
-
-
-def maybe_write_to_cache(cache_key, data):
-    if not use_cache():
-        return
-    global _WRITE_TO_CACHE
-    if not _WRITE_TO_CACHE:
-        return
-
-    path = _build_path(cache_key)
-    if _is_cache_expired(path):
-        with open(path, 'w') as f:
-            f.write(json.dumps(data))
+        if self._is_cache_expired():
+            with open(self.path, 'w') as f:
+                f.write(json.dumps(data))

@@ -61,7 +61,7 @@ REGION_SHORTS = {
     'sa-east-1': 'South America (Sao Paulo)',  # intentionally no unicode,
     'us-east-1': 'US East (N. Virginia)',
     'us-east-2': 'US East (Ohio)',
-    'us-gov-east-1': 'AWS GovCloud (US-East)'
+    'us-gov-east-1': 'AWS GovCloud (US-East)',
     'us-gov-west-1': 'AWS GovCloud (US)',
     'us-west-1': 'US West (N. California)',
     'us-west-2': 'US West (Oregon)',

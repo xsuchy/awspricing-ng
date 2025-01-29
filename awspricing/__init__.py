@@ -5,7 +5,7 @@ import datetime
 import progressbar
 
 from .offers import AWSOffer, get_offer_class  # noqa
-from .cache import maybe_read_from_cache, maybe_write_to_cache
+from .cache import Cache
 
 
 __version__ = "2.0.3"
@@ -19,12 +19,12 @@ TIME_FORMAT = '%b_%y_%Z'  # month, year, and timezone
 
 
 def _fetch_offers():
-    cache_key = 'offers'
-    offers = maybe_read_from_cache(cache_key)
+    cache = Cache('offers')
+    offers = cache.maybe_read_from_cache()
     if offers is not None:
         return offers
 
-    maybe_write_to_cache(cache_key, offers)
+    cache.maybe_write_to_cache(offers)
     return offers
 
 
@@ -43,7 +43,8 @@ def _fetch_offer(offer_name, version=None):
         version = datetime.datetime.utcnow().strftime(TIME_FORMAT)
 
     cache_key = 'offer_{}_{}'.format(offer_name, version)
-    offer = maybe_read_from_cache(cache_key)
+    cache = Cache(cache_key)
+    offer = cache.maybe_read_from_cache()
     if offer is not None:
         return offer
 
@@ -57,7 +58,7 @@ def _fetch_offer(offer_name, version=None):
             sku = product_offer['product']['sku']
             offer[sku] = product_offer
 
-    maybe_write_to_cache(cache_key, offer)
+    cache.maybe_write_to_cache(offer)
     return offer
 
 
