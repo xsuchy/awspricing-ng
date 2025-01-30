@@ -169,7 +169,7 @@ class EC2Offer(AWSOffer):
             'volumeApiName', 'location', 'group', product_families=['System Operation'])
 
         self._reverse_sku_snapshot_archive = self._generate_reverse_sku_mapping(
-            'regionCode', product_families=['Storage Snapshot'])
+            'regionCode', 'snapshotarchivefeetype', product_families=['Storage Snapshot'])
 
         # Lazily-loaded cache to hold offerTermCodes within a SKU
         self._reserved_terms_to_offer_term_code = defaultdict(dict)
@@ -399,8 +399,7 @@ class EC2Offer(AWSOffer):
             self,
             region=None  # type: Optional[str]
     ):
-        region = self._normalize_region(region)
-        attributes = [region]
+        attributes = [region, "SnapshotArchiveStorage"]
         if not all(attributes):
             raise ValueError(
                 "All attributes are required: {}".format(attributes))
@@ -409,12 +408,7 @@ class EC2Offer(AWSOffer):
         if sku is None:
             raise ValueError(
                 "Unable to lookup SKU for attributes: {}".format(attributes))
-        offer = self._offer_data[sku]
-        term = offer['terms']['OnDemand']
-        price_dimensions = next(six.itervalues(term))['priceDimensions']
-        price_dimension = next(six.itervalues(price_dimensions))
-        raw_price = price_dimension['pricePerUnit']['USD']
-        return float(raw_price)
+        return sku
 
 # Snapshot archives ahs snapshotarchivefeetype
 # normal snapshots does not have it
