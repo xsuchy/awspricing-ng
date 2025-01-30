@@ -68,11 +68,12 @@ class Cache:
         except (OSError, IOError):
             return True
         cache_lifetime_seconds = time.time() - mod_time
-        return cache_lifetime_seconds > self.cache_minutes() * 60
+        result = cache_lifetime_seconds > self.cache_minutes() * 60
+        return result
 
 
     def _build_path(self):
-        if not re.match(r'^[A-Za-z0-9_\-]*$', self.cache_key):
+        if not re.match(r'^[A-Za-z0-9_\-\.]*$', self.cache_key):
             raise ValueError("Cache key '{}' contains invalid characters."
                              .format(self.cache_key))
         return os.path.join(self.cache_path(), self.cache_key)
@@ -100,4 +101,4 @@ class Cache:
 
         if self._is_cache_expired():
             with open(self.path, 'w') as f:
-                f.write(json.dumps(data))
+                f.write(json.dumps(data, indent=0))

@@ -169,7 +169,7 @@ class EC2Offer(AWSOffer):
             'volumeApiName', 'location', 'group', product_families=['System Operation'])
 
         self._reverse_sku_snapshot_archive = self._generate_reverse_sku_mapping(
-            'snapshotarchivefeetype', 'regionCode', product_families=['Storage Snapshot'])
+            'regionCode', product_families=['Storage Snapshot'])
 
         # Lazily-loaded cache to hold offerTermCodes within a SKU
         self._reserved_terms_to_offer_term_code = defaultdict(dict)
@@ -397,10 +397,10 @@ class EC2Offer(AWSOffer):
 
     def get_sku_snapshot_archive(
             self,
-            archive,  # type: bool
             region=None  # type: Optional[str]
     ):
-        attributes = ["SnapshotArchiveStorage", region]
+        region = self._normalize_region(region)
+        attributes = [region]
         if not all(attributes):
             raise ValueError(
                 "All attributes are required: {}".format(attributes))
@@ -409,8 +409,19 @@ class EC2Offer(AWSOffer):
         if sku is None:
             raise ValueError(
                 "Unable to lookup SKU for attributes: {}".format(attributes))
-        return sku
+        offer = self._offer_data[sku]
+        term = offer['terms']['OnDemand']
+        price_dimensions = next(six.itervalues(term))['priceDimensions']
+        price_dimension = next(six.itervalues(price_dimensions))
+        raw_price = price_dimension['pricePerUnit']['USD']
+        return float(raw_price)
 
+# Snapshot archives ahs snapshotarchivefeetype
+# normal snapshots does not have it
+# Archives has 
+# usagetype": "USE2-EBS:SnapshotArchiveStorage",
+# normal hase
+# "usagetype": "USW1-EBS:SnapshotUsage",
 
     def ebs_snapshot_monthly(
             self,
@@ -419,7 +430,7 @@ class EC2Offer(AWSOffer):
     ):
         # type: (...) -> float
         if archive:
-            sku = self.get_sku_snapshot(archive, region=region)
+            sku = self.get_sku_snapshot_archive(region=region)
         else:
             # TODO
             raise ValueError("Not implemented")
@@ -429,6 +440,7 @@ class EC2Offer(AWSOffer):
         price_dimension = next(six.itervalues(price_dimensions))
         raw_price = price_dimension['pricePerUnit']['USD']
         return float(raw_price)
+
 
     def get_sku_ebs(
             self,
@@ -447,13 +459,6 @@ class EC2Offer(AWSOffer):
             raise ValueError(
                 "Unable to lookup SKU for attributes: {}".format(attributes))
         return sku
-
-# Snapshot archives ahs snapshotarchivefeetype
-# normal snapshots does not have it
-# Archives has 
-# usagetype": "USE2-EBS:SnapshotArchiveStorage",
-# normal hase
-# "usagetype": "USW1-EBS:SnapshotUsage",
 
 
     def ebs_volume_monthly(

@@ -40,7 +40,10 @@ def _fetch_offer(offer_name, version=None):
     if offer_name not in services:
         raise ValueError('Unknown offer name, no corresponding AWS Service: {}'.format(offer_name))
     if not version:
-        version = datetime.datetime.utcnow().strftime(TIME_FORMAT)
+        if __version__:
+            version = __version__
+        else:
+            version = datetime.datetime.utcnow().strftime(TIME_FORMAT)
 
     cache_key = 'offer_{}_{}'.format(offer_name, version)
     cache = Cache(cache_key)
